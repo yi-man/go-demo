@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# TARGET_DIR="gen"
+TARGET_DIR="gen"
 # TARGET_DIR="ultimate"
 # TARGET_DIR="sync_table"
 TARGET_DIR="without_db"
