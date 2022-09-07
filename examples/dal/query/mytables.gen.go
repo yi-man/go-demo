@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm/schema"
 
 	"gorm.io/gen"
-	"gorm.io/gen/examples/dal/model"
+	"go.demo/examples/dal/model"
 	"gorm.io/gen/field"
 )
 
