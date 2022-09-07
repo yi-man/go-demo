@@ -12,44 +12,51 @@ import (
 )
 
 var (
-	Q       = new(Query)
-	Mytable *mytable
+	Q        = new(Query)
+	Customer *customer
+	Mytable  *mytable
 )
 
 func SetDefault(db *gorm.DB) {
 	*Q = *Use(db)
+	Customer = &Q.Customer
 	Mytable = &Q.Mytable
 }
 
 func Use(db *gorm.DB) *Query {
 	return &Query{
-		db:      db,
-		Mytable: newMytable(db),
+		db:       db,
+		Customer: newCustomer(db),
+		Mytable:  newMytable(db),
 	}
 }
 
 type Query struct {
 	db *gorm.DB
 
-	Mytable mytable
+	Customer customer
+	Mytable  mytable
 }
 
 func (q *Query) Available() bool { return q.db != nil }
 
 func (q *Query) clone(db *gorm.DB) *Query {
 	return &Query{
-		db:      db,
-		Mytable: q.Mytable.clone(db),
+		db:       db,
+		Customer: q.Customer.clone(db),
+		Mytable:  q.Mytable.clone(db),
 	}
 }
 
 type queryCtx struct {
-	Mytable mytableDo
+	Customer *customerDo
+	Mytable  *mytableDo
 }
 
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
-		Mytable: *q.Mytable.WithContext(ctx),
+		Customer: q.Customer.WithContext(ctx),
+		Mytable:  q.Mytable.WithContext(ctx),
 	}
 }
 

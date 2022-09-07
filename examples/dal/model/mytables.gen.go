@@ -8,10 +8,10 @@ const TableNameMytable = "mytables"
 
 // Mytable mapped from table <mytables>
 type Mytable struct {
-	ID       int32   `gorm:"column:ID;type:int(11);not null" json:"ID_example"`
-	Username *string `gorm:"column:username;type:varchar(16);index:idx_username,priority:1;default:NULL" json:"username_example"`
-	Age      int32   `gorm:"column:age;type:int(8);not null" json:"age_example"`
-	Phone    string  `gorm:"column:phone;type:varchar(11);not null" json:"phone_example"`
+	ID       int64   `gorm:"column:ID;not null" json:"-"`
+	Username *string `gorm:"column:username;index:idx_username,priority:1" json:"-"`
+	Age      int64   `gorm:"column:age;not null" json:"-"`
+	Phone    string  `gorm:"column:phone;not null" json:"-"`
 }
 
 // TableName Mytable's table name

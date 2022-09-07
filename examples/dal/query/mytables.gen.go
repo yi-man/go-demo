@@ -12,8 +12,11 @@ import (
 	"gorm.io/gorm/schema"
 
 	"gorm.io/gen"
-	"go.demo/examples/dal/model"
 	"gorm.io/gen/field"
+
+	"gorm.io/plugin/dbresolver"
+
+	"go.demo/examples/dal/model"
 )
 
 func newMytable(db *gorm.DB) mytable {
@@ -23,10 +26,10 @@ func newMytable(db *gorm.DB) mytable {
 	_mytable.mytableDo.UseModel(&model.Mytable{})
 
 	tableName := _mytable.mytableDo.TableName()
-	_mytable.ALL = field.NewField(tableName, "*")
-	_mytable.ID = field.NewInt32(tableName, "ID")
+	_mytable.ALL = field.NewAsterisk(tableName)
+	_mytable.ID = field.NewInt64(tableName, "ID")
 	_mytable.Username = field.NewString(tableName, "username")
-	_mytable.Age = field.NewInt32(tableName, "age")
+	_mytable.Age = field.NewInt64(tableName, "age")
 	_mytable.Phone = field.NewString(tableName, "phone")
 
 	_mytable.fillFieldMap()
@@ -37,36 +40,50 @@ func newMytable(db *gorm.DB) mytable {
 type mytable struct {
 	mytableDo mytableDo
 
-	ALL      field.Field
-	ID       field.Int32
+	ALL      field.Asterisk
+	ID       field.Int64
 	Username field.String
-	Age      field.Int32
+	Age      field.Int64
 	Phone    field.String
 
 	fieldMap map[string]field.Expr
 }
 
+func (m mytable) Table(newTableName string) *mytable {
+	m.mytableDo.UseTable(newTableName)
+	return m.updateTableName(newTableName)
+}
+
 func (m mytable) As(alias string) *mytable {
 	m.mytableDo.DO = *(m.mytableDo.As(alias).(*gen.DO))
+	return m.updateTableName(alias)
+}
 
-	m.ALL = field.NewField(alias, "*")
-	m.ID = field.NewInt32(alias, "ID")
-	m.Username = field.NewString(alias, "username")
-	m.Age = field.NewInt32(alias, "age")
-	m.Phone = field.NewString(alias, "phone")
+func (m *mytable) updateTableName(table string) *mytable {
+	m.ALL = field.NewAsterisk(table)
+	m.ID = field.NewInt64(table, "ID")
+	m.Username = field.NewString(table, "username")
+	m.Age = field.NewInt64(table, "age")
+	m.Phone = field.NewString(table, "phone")
 
 	m.fillFieldMap()
 
-	return &m
+	return m
 }
 
 func (m *mytable) WithContext(ctx context.Context) *mytableDo { return m.mytableDo.WithContext(ctx) }
 
 func (m mytable) TableName() string { return m.mytableDo.TableName() }
 
-func (m *mytable) GetFieldByName(fieldName string) (field.Expr, bool) {
-	field, ok := m.fieldMap[fieldName]
-	return field, ok
+func (m mytable) Alias() string { return m.mytableDo.Alias() }
+
+func (m *mytable) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
+	_f, ok := m.fieldMap[fieldName]
+	if !ok || _f == nil {
+		return nil, false
+	}
+	_oe, ok := _f.(field.OrderExpr)
+	return _oe, ok
 }
 
 func (m *mytable) fillFieldMap() {
@@ -92,8 +109,20 @@ func (m mytableDo) WithContext(ctx context.Context) *mytableDo {
 	return m.withDO(m.DO.WithContext(ctx))
 }
 
+func (m mytableDo) ReadDB() *mytableDo {
+	return m.Clauses(dbresolver.Read)
+}
+
+func (m mytableDo) WriteDB() *mytableDo {
+	return m.Clauses(dbresolver.Write)
+}
+
 func (m mytableDo) Clauses(conds ...clause.Expression) *mytableDo {
 	return m.withDO(m.DO.Clauses(conds...))
+}
+
+func (m mytableDo) Returning(value interface{}, columns ...string) *mytableDo {
+	return m.withDO(m.DO.Returning(value, columns...))
 }
 
 func (m mytableDo) Not(conds ...gen.Condition) *mytableDo {
@@ -110,6 +139,10 @@ func (m mytableDo) Select(conds ...field.Expr) *mytableDo {
 
 func (m mytableDo) Where(conds ...gen.Condition) *mytableDo {
 	return m.withDO(m.DO.Where(conds...))
+}
+
+func (m mytableDo) Exists(subquery interface{ UnderlyingDB() *gorm.DB }) *mytableDo {
+	return m.Where(field.CompareSubQuery(field.ExistsOp, nil, subquery.UnderlyingDB()))
 }
 
 func (m mytableDo) Order(conds ...field.Expr) *mytableDo {
@@ -230,12 +263,18 @@ func (m mytableDo) Assign(attrs ...field.AssignExpr) *mytableDo {
 	return m.withDO(m.DO.Assign(attrs...))
 }
 
-func (m mytableDo) Joins(field field.RelationField) *mytableDo {
-	return m.withDO(m.DO.Joins(field))
+func (m mytableDo) Joins(fields ...field.RelationField) *mytableDo {
+	for _, _f := range fields {
+		m = *m.withDO(m.DO.Joins(_f))
+	}
+	return &m
 }
 
-func (m mytableDo) Preload(field field.RelationField) *mytableDo {
-	return m.withDO(m.DO.Preload(field))
+func (m mytableDo) Preload(fields ...field.RelationField) *mytableDo {
+	for _, _f := range fields {
+		m = *m.withDO(m.DO.Preload(_f))
+	}
+	return &m
 }
 
 func (m mytableDo) FirstOrInit() (*model.Mytable, error) {
@@ -255,12 +294,17 @@ func (m mytableDo) FirstOrCreate() (*model.Mytable, error) {
 }
 
 func (m mytableDo) FindByPage(offset int, limit int) (result []*model.Mytable, count int64, err error) {
-	count, err = m.Count()
+	result, err = m.Offset(offset).Limit(limit).Find()
 	if err != nil {
 		return
 	}
 
-	result, err = m.Offset(offset).Limit(limit).Find()
+	if size := len(result); 0 < limit && 0 < size && size < limit {
+		count = int64(size + offset)
+		return
+	}
+
+	count, err = m.Offset(-1).Limit(-1).Count()
 	return
 }
 
@@ -272,6 +316,14 @@ func (m mytableDo) ScanByPage(result interface{}, offset int, limit int) (count 
 
 	err = m.Offset(offset).Limit(limit).Scan(result)
 	return
+}
+
+func (m mytableDo) Scan(result interface{}) (err error) {
+	return m.DO.Scan(result)
+}
+
+func (m mytableDo) Delete(models ...*model.Mytable) (result gen.ResultInfo, err error) {
+	return m.DO.Delete(models)
 }
 
 func (m *mytableDo) withDO(do gen.Dao) *mytableDo {
