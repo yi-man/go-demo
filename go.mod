@@ -6,7 +6,7 @@ require (
 	gorm.io/driver/mysql v1.3.6
 	gorm.io/driver/sqlite v1.3.5
 	gorm.io/gen v0.3.16
-	gorm.io/gorm v1.23.9-0.20220713102635-3262daf8d468
+	gorm.io/gorm v1.24.0
 )
 
 require (
