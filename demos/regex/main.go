@@ -6,11 +6,26 @@ import (
 )
 
 func main() {
-	re := regexp.MustCompile(`^[\p{Han}A-Za-z][\p{Han}A-Za-z0-9_]*[^\d_]$`)
-	fmt.Println("测试字符串: ", re.MatchString("测试字符串"))
-	fmt.Println("_测试字符串:", re.MatchString("_测试字符串"))
-	fmt.Println("测试字符串_:", re.MatchString("测试字符串_"))
-	fmt.Println("11测试字符串: ", re.MatchString("11测试字符串"))
-	fmt.Println("aaa_测试字符串:", re.MatchString("aaa_测试字符串"))
-	fmt.Println("bbb:", re.MatchString("bbb"))
+	// 定义正则表达式
+	re := regexp.MustCompile(`^[A-Z][A-Z0-9_]*[A-Z0-9]$`)
+
+	// 测试字符串
+	strs := []string{
+		"ABC123_",   // 不匹配，以下划线结尾
+		"_ABC123",   // 不匹配，以下划线开头
+		"123ABC_",   // 不匹配，以数字开头
+		"ABC_123",   // 匹配
+		"AB_1C23",   // 匹配
+		"ABCD",      // 匹配
+		"AB_CD_123", // 匹配
+	}
+
+	// 遍历测试字符串
+	for _, str := range strs {
+		if re.MatchString(str) {
+			fmt.Printf("%s 匹配\n", str)
+		} else {
+			fmt.Printf("%s 不匹配\n", str)
+		}
+	}
 }
