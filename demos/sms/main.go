@@ -113,7 +113,7 @@ func (sms *SmsClient) QueryQuotaAndRateLimit() (*api.QueryQuotaRateResult, error
 
 func (sms *SmsClient) GetSignature(signatureId string) (*api.GetSignatureResult, error) {
 	result, err := sms.client.GetSignature(&api.GetSignatureArgs{
-		SignatureId: "your signature id",
+		SignatureId: signatureId,
 	})
 	if err != nil {
 		fmt.Printf("get signature error, %s", err)
@@ -126,7 +126,7 @@ func (sms *SmsClient) GetSignature(signatureId string) (*api.GetSignatureResult,
 
 func (sms *SmsClient) ListStatistics() (*api.ListStatisticsResponse, error) {
 	res, err := sms.client.ListStatistics(&api.ListStatisticsArgs{
-		SmsType:   "normal",
+		SmsType:   "CommonSale",
 		StartTime: "2024-05-14",
 		EndTime:   "2024-05-14",
 	})
@@ -194,15 +194,15 @@ func main() {
 	// result, err := smsClient.GetSmsTemplate(sendSmsParam.Template)
 
 	// 查询额度  not work
-	// result, err := smsClient.QueryQuotaAndRateLimit()
+	result, err := smsClient.QueryQuotaAndRateLimit()
 
-	// 查询签名  not work
+	// 查询签名
 	// result, err := smsClient.GetSignature(smsClient.Conf.SignatureId)
 
 	// 查询黑名单
-	result, err := smsClient.GetMobileBlack()
+	// result, err := smsClient.GetMobileBlack()
 
-	// 业务统计   not work
+	// 业务统计
 	// result, err := smsClient.ListStatistics()
 
 	if err != nil {
