@@ -9,6 +9,11 @@ import (
 
 const redisAddr = "127.0.0.1:6379"
 
+const (
+	EmailQueue = "notification_email"
+	ImageQueue = "notification_image_resize"
+)
+
 func main() {
 	client := asynq.NewClient(asynq.RedisClientOpt{Addr: redisAddr})
 	defer client.Close()
@@ -22,7 +27,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not create task: %v", err)
 	}
-	info, err := client.Enqueue(task)
+	info, err := client.Enqueue(task, asynq.Queue(EmailQueue))
 	if err != nil {
 		log.Fatalf("could not enqueue task: %v", err)
 	}
@@ -33,7 +38,7 @@ func main() {
 	//            Use ProcessIn or ProcessAt option.
 	// ------------------------------------------------------------
 
-	info, err = client.Enqueue(task, asynq.ProcessIn(24*time.Hour))
+	info, err = client.Enqueue(task, asynq.Queue(EmailQueue), asynq.ProcessIn(24*time.Second))
 	if err != nil {
 		log.Fatalf("could not schedule task: %v", err)
 	}
@@ -48,7 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not create task: %v", err)
 	}
-	info, err = client.Enqueue(task, asynq.MaxRetry(10), asynq.Timeout(3*time.Minute))
+	info, err = client.Enqueue(task, asynq.Queue(ImageQueue), asynq.MaxRetry(10), asynq.Timeout(3*time.Minute))
 	if err != nil {
 		log.Fatalf("could not enqueue task: %v", err)
 	}

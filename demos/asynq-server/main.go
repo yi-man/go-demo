@@ -8,18 +8,23 @@ import (
 
 const redisAddr = "127.0.0.1:6379"
 
+const (
+	EmailQueue = "notification_email"
+	ImageQueue = "notification_image_resize"
+)
+
 func main() {
+	queues := make(map[string]int)
+	queues[EmailQueue] = 4
+	queues[ImageQueue] = 2
+
 	srv := asynq.NewServer(
 		asynq.RedisClientOpt{Addr: redisAddr},
 		asynq.Config{
 			// Specify how many concurrent workers to use
 			Concurrency: 10,
 			// Optionally specify multiple queues with different priority.
-			Queues: map[string]int{
-				"critical": 6,
-				"default":  3,
-				"low":      1,
-			},
+			Queues: queues,
 			// See the godoc for other configuration options
 		},
 	)
